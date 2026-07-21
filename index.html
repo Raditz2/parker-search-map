@@ -29,9 +29,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#111;ove
 .sw .t{flex:1}
 .sw .t .l{font-size:12px;color:#ddd}
 .sw .t .d{font-size:9px;color:#666;display:block}
+.verified{position:fixed;top:8px;left:8px;z-index:1000;background:rgba(0,0,0,0.8);padding:3px 6px;border-radius:4px;font-size:9px;color:#8a8;border:1px solid #4a8}
 </style>
 </head>
 <body>
+<div class="verified">✓ City of Calgary camera data + OSM verified</div>
 <div id="map"></div>
 <div id="bar">
   <button class="loc" onclick="locateMe()">📍</button>
@@ -40,11 +42,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#111;ove
 </div>
 <div id="panel">
   <button class="x" onclick="panel()">✕</button>
-  <h2>Show on map:</h2>
+  <h2>Show:</h2>
   <div id="toggles"></div>
 </div>
 <script>
-const map=L.map('map',{center:[51.092,-114.064],zoom:14.5,zoomControl:false,attributionControl:false});
+// ═══ CORRECT COORDINATES ═══
+// McKnight & Centre St: 51.09597, -114.06236 (Calgary city traffic cam data + OSM reverse)
+// Day Home: 51.08506, -114.09319 (OSM)
+// Clothing: 51.0855, -114.0800 (OSM)
+// Travis Cres: 51.10099, -114.05830 (OSM way 19773737)
+
+const map=L.map('map',{center:[51.098,-114.060],zoom:15,zoomControl:false,attributionControl:false});
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 L.control.zoom({position:'bottomleft'}).addTo(map);
 
@@ -57,68 +65,59 @@ const LZ={
   labels:L.layerGroup()
 };
 
-// ─── VERIFIED LOCATIONS ───
-// Day Home: Connaught Dr NW (51.08506, -114.09319)
-// Clothing: Northmount Dr NW (51.0855, -114.080)
-// CCTV: McKnight & Centre St (51.0855, -114.0624)
-// Last Seen: Travis Cres NE (51.10099, -114.05830)
-
-// Nose Creek (always on base)
-const nc=[];for(let i=0;i<=35;i++){let t=i/35;nc.push([51.092+t*(51.072-51.092),-114.059+t*(-114.049+114.059)+0.005*Math.sin(t*8)])}
+// Nose Creek
+const nc=[];for(let i=0;i<=35;i++){let t=i/35;nc.push([51.095+t*(51.074-51.095),-114.059+t*(-114.049+114.059)+0.005*Math.sin(t*8)])}
 L.polyline(nc,{color:'#3af',weight:4,opacity:0.35});
 
-// Water features (blue dots)
-[[51.0996,-114.0528],[51.0878,-114.0494],[51.0838,-114.0475],[51.0815,-114.0540],[51.0790,-114.0500],[51.0770,-114.0480],[51.1005,-114.0550],[51.0990,-114.0575],[51.0875,-114.0545]].forEach(d=>{
-L.circle([d[0],d[1]],{radius:15,color:'#3af',fillColor:'#3af',fillOpacity:0.4,weight:2})});
+// Water
+[[51.0996,-114.0528],[51.0878,-114.0494],[51.0838,-114.0475],[51.0815,-114.0540],[51.0790,-114.0500],[51.0770,-114.0480],[51.1005,-114.0550],[51.0990,-114.0575],[51.0875,-114.0545]].forEach(d=>{L.circle([d[0],d[1]],{radius:15,color:'#3af',fillColor:'#3af',fillOpacity:0.4,weight:2})});
 
-// Parks (green dots)
-[[51.1045,-114.0533],[51.1028,-114.0581],[51.1014,-114.0581],[51.0997,-114.0601],[51.1038,-114.0613],[51.0923,-114.0519],[51.0919,-114.0565],[51.0975,-114.0565],[51.0968,-114.0522],[51.1002,-114.0530],[51.0935,-114.0674],[51.0891,-114.0604],[51.0853,-114.0660]].forEach(d=>{
-L.circle([d[0],d[1]],{radius:22,color:'#3a8',fillColor:'#3a8',fillOpacity:0.2,weight:1})});
+// Parks
+[[51.1045,-114.0533],[51.1028,-114.0581],[51.1014,-114.0581],[51.0997,-114.0601],[51.098,-114.063],[51.0923,-114.0519],[51.0975,-114.0565],[51.0968,-114.0522],[51.1002,-114.0530],[51.0935,-114.0674],[51.0891,-114.0604]].forEach(d=>{L.circle([d[0],d[1]],{radius:22,color:'#3a8',fillColor:'#3a8',fillOpacity:0.2,weight:1})});
 
-// Zone 1
+// Zone 1 from Travis
 L.circle([51.10099,-114.05830],{radius:500,color:'#f44',fillColor:'#f44',fillOpacity:0.02,weight:2,opacity:0.3}).addTo(LZ.zone);
-L.circle([51.10099,-114.05830],{radius:2400,color:'#f66',fill:false,weight:1,opacity:0.12,dashArray:'4,4'}).addTo(LZ.zone);
-L.circle([51.10099,-114.05830],{radius:4800,color:'#fa4',fill:false,weight:1,opacity:0.08,dashArray:'4,4'}).addTo(LZ.zone);
 
-// ═══ 4 KEY MARKERS ═══
-// 1. Day Home
-L.circleMarker([51.08506,-114.09319],{radius:7,color:'#fd6',fillColor:'#fd6',fillOpacity:0.9,weight:2}).addTo(LZ.zone);
-L.marker([51.08506,-114.09319],{icon:L.divIcon({iconSize:[0,0],html:'<div style="background:#fd6;color:#000;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;border:1px solid #fff">🏡 Day Home 11:08</div>'})}).addTo(LZ.zone);
+// ═══ THE 4 CORRECT LOCATIONS ═══
 
-// 2. Clothing
-L.circleMarker([51.0855,-114.080],{radius:7,color:'#fd6',fillColor:'#fd6',fillOpacity:0.9,weight:2}).addTo(LZ.zone);
-L.marker([51.0855,-114.080],{icon:L.divIcon({iconSize:[0,0],html:'<div style="background:#fd6;color:#000;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;border:1px solid #fff">👕 Clothing ~12:00</div>'})}).addTo(LZ.zone);
+// 1. Day Home (Connaught Dr NW)
+L.circleMarker([51.08506,-114.09319],{radius:6,color:'#fd6',fillColor:'#fd6',fillOpacity:0.9,weight:2}).addTo(LZ.zone);
+L.marker([51.0845,-114.092],{icon:L.divIcon({iconSize:[0,0],html:'<div style="background:#fd6;color:#000;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;border:1px solid #fff">🏡 Day Home 11:08</div>'})}).addTo(LZ.zone);
 
-// 3. CCTV - McKnight & Centre St N (THE sighting)
-L.circleMarker([51.0855,-114.0624],{radius:9,color:'#f44',fillColor:'#f44',fillOpacity:0.9,weight:3}).addTo(LZ.zone);
-L.marker([51.0855,-114.0624],{icon:L.divIcon({iconSize:[0,0],html:'<div style="background:#c33;color:#fff;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:bold;border:2px solid #ff0;box-shadow:0 2px 8px rgba(0,0,0,0.8)">📹 CCTV SIGHTING McKnight & Centre St 12:34-12:47</div>'})}).addTo(LZ.zone);
+// 2. Clothing (Northmount Dr NW)
+L.circleMarker([51.0855,-114.080],{radius:6,color:'#fd6',fillColor:'#fd6',fillOpacity:0.9,weight:2}).addTo(LZ.zone);
+L.marker([51.085,-114.079],{icon:L.divIcon({iconSize:[0,0],html:'<div style="background:#fd6;color:#000;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;border:1px solid #fff">👕 Clothing ~12:00</div>'})}).addTo(LZ.zone);
 
-// 4. Last Seen - Travis Cres
+// 3. CCTV - McKnight & Centre St (CORRECT: 51.09597, -114.06236 per city data)
+L.circleMarker([51.09597,-114.06236],{radius:10,color:'#f44',fillColor:'#f44',fillOpacity:0.9,weight:3}).addTo(LZ.zone);
+L.marker([51.0945,-114.0615],{icon:L.divIcon({iconSize:[0,0],html:'<div style="background:#c33;color:#fff;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:bold;border:2px solid #ff0;box-shadow:0 2px 8px rgba(0,0,0,0.8)">📹 CCTV SIGHTING McKnight & Centre St 12:34-12:47</div>'})}).addTo(LZ.zone);
+
+// 4. LAST SEEN - Travis Cres
 L.circleMarker([51.10099,-114.05830],{radius:18,color:'#f44',fillColor:'#f44',fillOpacity:0.9,weight:3,interactive:false});
 L.marker([51.103,-114.05830],{icon:L.divIcon({iconSize:[0,0],html:'<div style="background:#c33;color:#fff;padding:4px 10px;border-radius:8px;font-size:14px;font-weight:bold;border:2px solid #fff;box-shadow:0 2px 12px rgba(0,0,0,0.9)">🚨 LAST SEEN 12:52 Travis Cres</div>'})});
 
-// Hide spots (orange dots)
+// Hide spots
 [[51.0863,-114.0575],[51.0845,-114.0565],[51.0852,-114.0585],[51.0825,-114.0555],[51.0985,-114.0565],[51.0990,-114.0575],[51.1005,-114.0550],[51.0860,-114.0572],[51.1015,-114.0535],[51.0875,-114.0545]].forEach(d=>{
 L.circleMarker([d[0],d[1]],{radius:5,color:'#fd4',fillColor:'#fd4',fillOpacity:0.8,weight:2}).addTo(LZ.spots)});
 
-// Route (OFF by default)
-const rt=[[51.08506,-114.09319],[51.0855,-114.080],[51.0855,-114.0624],[51.10099,-114.05830]];
+// Route - CORRECT PATH
+const rt=[[51.08506,-114.09319],[51.0855,-114.080],[51.09597,-114.06236],[51.10099,-114.05830]];
 ['#fd6','#fa3','#f44'].forEach((c,i)=>{let p1=rt[i],p2=rt[i+1],dx=p2[0]-p1[0],dy=p2[1]-p1[1],w=i===2?5:3;for(let s=0;s<30;s+=2){let t1=s/30,t2=Math.min((s+1)/30,1);L.polyline([[p1[0]+dx*t1,p1[1]+dy*t1],[p1[0]+dx*t2,p1[1]+dy*t2]],{color:c,weight:w,opacity:0.8}).addTo(LZ.route)}});
 
 // Labels (OFF)
-L.marker([51.092,-114.060],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:11px;color:#f44;border:1px solid #f44">🔴 ZONE 1 500m</span>'})}).addTo(LZ.labels);
-L.marker([51.083,-114.087],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:10px;color:#fd6">1. Walk 1.7km/h</span>'})}).addTo(LZ.labels);
-L.marker([51.084,-114.070],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:10px;color:#fa3">2. Brisk 2.1km/h</span>'})}).addTo(LZ.labels);
-L.marker([51.093,-114.063],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:10px;color:#f44;font-weight:bold">3. SPRINTS to Travis Cres! 9.6km/h</span>'})}).addTo(LZ.labels);
+L.marker([51.092,-114.059],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:11px;color:#f44;border:1px solid #f44">🔴 ZONE 1 500m</span>'})}).addTo(LZ.labels);
+L.marker([51.084,-114.087],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:10px;color:#fd6">1. Walk 1.7km/h</span>'})}).addTo(LZ.labels);
+L.marker([51.089,-114.074],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:10px;color:#fa3">2. Walk north 2.1km/h</span>'})}).addTo(LZ.labels);
+L.marker([51.098,-114.061],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:10px;color:#f44;font-weight:bold">3. SPRINTS to Travis! 7km/h</span>'})}).addTo(LZ.labels);
 
 // Toggles
 const TD=[
-  {id:'water',label:'💧 Water',desc:'Ponds, creeks',on:true},
-  {id:'quiet',label:'🌿 Parks',desc:'Quiet green spaces',on:true},
-  {id:'spots',label:'▼ Pipes to check',desc:'10 drain spots',on:true},
-  {id:'zone',label:'Zone + 4 markers',desc:'Boundary & sightings',on:true},
-  {id:'route',label:"Parker's path",desc:'Walk → sprint',on:false},
-  {id:'labels',label:'Extra labels',desc:'Speed, zone text',on:false}
+  {id:'water',label:'💧 Water',desc:'Ponds, Nose Creek',on:true},
+  {id:'quiet',label:'🌿 Parks',desc:'Green spaces',on:true},
+  {id:'spots',label:'▼ Pipes',desc:'10 drain spots',on:true},
+  {id:'zone',label:'📍 4 sightings',desc:'Route + markers',on:true},
+  {id:'route',label:'🟡 Route path',desc:'Walk → sprint',on:false},
+  {id:'labels',label:'🏷️ Labels',desc:'Speed text',on:false}
 ];
 const tc=document.getElementById('toggles');
 TD.forEach(t=>{
