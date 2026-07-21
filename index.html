@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Parker Wells - Search Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#111;color:#fff}
+  #map{width:100vw;height:100vh}
+  .legend{position:absolute;bottom:30px;left:10px;z-index:1000;background:rgba(0,0,0,0.85);padding:12px;border-radius:8px;font-size:13px;max-width:200px;border:1px solid #444}
+  .legend-item{display:flex;align-items:center;gap:8px;margin:3px 0}
+  .legend-color{width:20px;height:4px;border-radius:2px}
+  .btn-locate{position:absolute;top:80px;right:10px;z-index:1000;background:rgba(0,0,0,0.85);color:#fff;border:1px solid #555;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px}
+  .btn-locate:hover{background:#333}
+  .layer-toggle{position:absolute;top:120px;right:10px;z-index:1000;background:rgba(0,0,0,0.85);padding:10px;border-radius:8px;border:1px solid #555;font-size:12px;min-width:160px}
+  .layer-toggle label{display:flex;align-items:center;gap:6px;margin:4px 0;cursor:pointer}
+  .layer-toggle input{cursor:pointer}
+  .search-instr{position:absolute;bottom:200px;left:10px;z-index:1000;background:rgba(200,30,30,0.9);padding:10px 14px;border-radius:8px;font-size:13px;max-width:220px;border:2px solid #ff4444;animation:pulse 2s infinite}
+  @keyframes pulse{0%{opacity:1}50%{opacity:0.7}100%{opacity:1}}
+  .search-instr h4{color:#fff;margin-bottom:4px}
+  .search-instr p{color:#ffdddd;font-size:12px;line-height:1.4}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="legend">
+  <div style="font-weight:bold;margin-bottom:6px">Legend</div>
+  <div class="legend-item"><div class="legend-color" style="background:#ff4444;height:6px"></div> RUN (9.6 km/h)</div>
+  <div class="legend-item"><div class="legend-color" style="background:#ffaa33"></div> Brisk walk</div>
+  <div class="legend-item"><div class="legend-color" style="background:#ffdd66"></div> Slow walk</div>
+  <div class="legend-item"><div class="legend-color" style="background:rgba(255,50,50,0.3);height:12px"></div> High probability</div>
+  <div class="legend-item"><span style="color:#ffcc44">&#9660;</span> Hide spot (pipe/culvert)</div>
+</div>
+<div class="search-instr">
+  <h4>SEARCH NOW</h4>
+  <p>1. Walk Nose Creek corridor<br>2. Check every drain/pipe<br>3. Sheds, under decks<br><b>Found? Don't approach. Call 911.</b></p>
+</div>
+<button class="btn-locate" onclick="locateMe()">Show my location</button>
+<div class="layer-toggle">
+  <div style="font-weight:bold;margin-bottom:5px;color:#aaa">Layers</div>
+  <label><input type="checkbox" checked onchange="toggleLayer('heat',this.checked)"/> Heat zones</label>
+  <label><input type="checkbox" checked onchange="toggleLayer('route',this.checked)"/> Route</label>
+  <label><input type="checkbox" checked onchange="toggleLayer('hideouts',this.checked)"/> Hide spots</label>
+  <label><input type="checkbox" checked onchange="toggleLayer('zones',this.checked)"/> Search zones</label>
+  <label><input type="checkbox" checked onchange="toggleLayer('drive',this.checked)"/> Drive patrol</label>
+</div>
+<script>
+const map = L.map('map',{center:[51.087,-114.056],zoom:14,zoomControl:true});
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'OpenStreetMap'}).addTo(map);
+const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
+L.control.layers({"Street":L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}),"Satellite":sat},null,{position:'topleft'}).addTo(map);
+const heatL = L.layerGroup().addTo(map), routeL = L.layerGroup().addTo(map), hideL = L.layerGroup().addTo(map);
+const zoneL = L.layerGroup().addTo(map), driveL = L.layerGroup().addTo(map), labelL = L.layerGroup().addTo(map);
+// Nose Creek
+const nc = []; for(let i=0;i<=20;i++){let t=i/20;nc.push([51.092+t*(51.075-51.092),-114.060+t*(-114.050+114.060)+0.005*Math.sin(t*8)])}
+L.polyline(nc,{color:'#44cc44',weight:6,opacity:0.4}).addTo(heatL);
+// Heat zones
+[[51.090,-114.047,400],[51.085,-114.055,350],[51.080,-114.052,350],[51.0885,-114.051,250]].forEach(d=>L.circle([d[0],d[1]],{radius:d[2],color:'#ff2222',fillColor:'#ff2222',fillOpacity:0.25,weight:2,opacity:0.5}).addTo(heatL));
+[[51.092,-114.045,600],[51.083,-114.050,500],[51.076,-114.048,500]].forEach(d=>L.circle([d[0],d[1]],{radius:d[2],color:'#ff8822',fillColor:'#ff8822',fillOpacity:0.12,weight:1,opacity:0.3}).addTo(heatL));
+[[2.4,'#ff6666'],[4.8,'#ff8844']].forEach(d=>L.circle([51.0885,-114.0510],{radius:d[0]*1000,color:d[1],fill:false,weight:1.5,opacity:0.3,dashArray:'8,8'}).addTo(heatL));
+// Route
+const rp = [{la:51.0865,lo:-114.0850},{la:51.0820,lo:-114.0780},{la:51.0850,lo:-114.0620},{la:51.0850,lo:-114.0620},{la:51.0885,lo:-114.0510}];
+const speeds = ['#ffdd66','#ffaa33','#ffaa33','#ff4444'];
+for(let i=0;i<rp.length-1;i++){let p1=rp[i],p2=rp[i+1],dx=p2.la-p1.la,dy=p2.lo-p1.lo,c=speeds[i],w=i===3?6:4;for(let s=0;s<20;s+=3){let t1=s/20,t2=Math.min((s+1)/20,1);L.polyline([[p1.la+dx*t1,p1.lo+dy*t1],[p1.la+dx*t2,p1.lo+dy*t2]],{color:c,weight:w,opacity:0.9}).addTo(routeL)}}
+// Speed labels
+[[51.083,-114.080,'Walk 1.7 km/h'],[51.084,-114.070,'Brisk 2.1 km/h'],[51.086,-114.057,'RUN 9.6 km/h!']].forEach(d=>L.marker([d[0],d[1]],{icon:L.divIcon({className:'',html:'<div style="background:rgba(0,0,0,0.7);color:#fff;padding:2px 6px;border-radius:3px;font-size:10px;white-space:nowrap">'+d[2]+'</div>',iconSize:[0,0]})}).addTo(labelL));
+// Location markers
+[['Day Home 11:08',51.0865,-114.0850,'#ffcc44'],['Clothing ~12:00',51.0820,-114.0780,'#ffcc44'],['CCTV 12:34 & 12:47',51.0850,-114.0620,'#ffcc44'],['LAST SEEN 12:52',51.0885,-114.0510,'#ff4444'],['Thorncliffe School',51.1017,-114.0667,'#ffaa44'],['Colonel Irvine School',51.0890,-114.0570,'#ffaa44']].forEach(d=>L.marker([d[1],d[2]],{icon:L.divIcon({className:'',html:'<div style="background:'+d[3]+';color:#000;padding:2px 6px;border-radius:3px;font-size:11px;font-weight:bold;white-space:nowrap;border:1px solid #fff">'+d[0]+'</div>',iconSize:[0,0]})}).addTo(labelL));
+// Hide spots
+[['DRAIN PIPE','Large culvert under McKnight bridge',51.0860,-114.0575],['CULVERT','Big pipe in Nose Creek bank',51.0845,-114.0565],['STORM DRAIN','Deep ditch McKnight Blvd',51.0850,-114.0580],['DRAIN PIPE','Nose Creek overgrown pipe',51.0825,-114.0555],['CULVERT','Large pipe under pathway',51.0805,-114.0535],['CREEK PIPE','Metal pipe outlet Nose Creek',51.0810,-114.0545],['STORM POND','Greenview pond inlets',51.0815,-114.0510],['BRIDGE UNDER','Dark space McKnight bridge',51.0865,-114.0570],['DITCH DRAIN','Roadside culvert east Travis',51.0875,-114.0535],['PIPE OUTFALL','Concrete pipe Nose Creek',51.0835,-114.0550]].forEach(d=>{let m=L.marker([d[2],d[3]],{icon:L.divIcon({className:'',html:'<div style="background:#ffcc44;color:#000;width:22px;height:22px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;border:2px solid #fff;cursor:pointer">&#9660;</div>',iconSize:[22,22],iconAnchor:[11,11]})}).addTo(hideL);m.bindPopup('<b style=color:#ffcc44>'+d[0]+'</b><p style=color:#555>'+d[1]+'</p><p style=color:#999;font-size:11px>Check INSIDE the pipe</p>')});
+// Search zones
+L.circle([51.0885,-114.0510],{radius:500,color:'#ff4444',fillColor:'#ff2222',fillOpacity:0.08,weight:3,opacity:0.7}).addTo(zoneL);
+L.circle([51.0885,-114.0510],{radius:1000,color:'#ff8844',fillColor:'#ff6622',fillOpacity:0.05,weight:2,opacity:0.5,dashArray:'6,6'}).addTo(zoneL);
+[['ZONE 1 Walk 500m',51.081,-114.057],['ZONE 2 Walk 1km',51.078,-114.055]].forEach(d=>L.marker([d[1],d[2]],{icon:L.divIcon({className:'',html:'<div style="background:rgba(0,0,0,0.7);color:#ff8844;padding:2px 6px;border-radius:3px;font-size:11px;font-weight:bold">'+d[0]+'</div>',iconSize:[0,0]})}).addTo(labelL));
+// Drive patrol
+[['McKnight Blvd',[[51.085,-114.105],[51.085,-114.035]]],['Centre St N',[[51.108,-114.062],[51.060,-114.062]]],['32 Ave NE',[[51.078,-114.095],[51.078,-114.035]]],['Deerfoot Tr',[[51.108,-114.044],[51.060,-114.044]]],['16 Ave N',[[51.066,-114.095],[51.066,-114.035]]],['Barlow Tr',[[51.096,-114.038],[51.068,-114.038]]]].forEach(d=>{L.polyline(d[1],{color:'#4488ff',weight:6,opacity:0.4}).addTo(driveL);let m=[(d[1][0][0]+d[1][1][0])/2,(d[1][0][1]+d[1][1][1])/2];L.marker(m,{icon:L.divIcon({className:'',html:'<div style="background:rgba(0,0,0,0.7);color:#4488ff;padding:1px 5px;border-radius:2px;font-size:10px;font-weight:bold">'+d[0]+'</div>',iconSize:[0,0]})}).addTo(labelL)});
+function locateMe(){map.locate({setView:true,maxZoom:16,enableHighAccuracy:true});map.on('locationfound',function(e){L.circleMarker(e.latlng,{radius:8,fillColor:'#44aaff',color:'#fff',weight:3,fillOpacity:0.9});L.popup().setLatLng(e.latlng).setContent('<b>You are here</b><br>Check nearby hide spots!').openOn(map)});map.on('locationerror',function(){alert('Enable GPS on your phone')})}
+function toggleLayer(n,s){const ls={heat:heatL,route:routeL,hideouts:hideL,zones:zoneL,drive:driveL};if(s)map.addLayer(ls[n]);else map.removeLayer(ls[n])}
+</script>
+</body>
+</html>
