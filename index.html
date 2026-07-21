@@ -1,87 +1,147 @@
 <!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>Parker Wells - CORRECTED Search Map</title>
+<html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Parker Search Map</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Segoe UI',Arial,sans-serif;background:#111;color:#fff}
-  #map{width:100vw;height:100vh}
-  .legend{position:absolute;bottom:30px;left:10px;z-index:1000;background:rgba(0,0,0,0.85);padding:12px;border-radius:8px;font-size:13px;max-width:200px;border:1px solid #444}
-  .legend-item{display:flex;align-items:center;gap:8px;margin:3px 0}
-  .legend-color{width:20px;height:4px;border-radius:2px}
-  .btn-locate{position:absolute;top:80px;right:10px;z-index:1000;background:rgba(200,30,30,0.9);color:#fff;border:2px solid #ff4444;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:bold}
-  .correction-banner{position:absolute;top:10px;left:10px;z-index:1000;background:rgba(200,30,30,0.95);padding:8px 12px;border-radius:6px;font-size:12px;max-width:300px;border:2px solid #ffcc44}
-  .layer-toggle{position:absolute;top:125px;right:10px;z-index:1000;background:rgba(0,0,0,0.85);padding:10px;border-radius:8px;border:1px solid #555;font-size:12px;min-width:170px}
-  .layer-toggle label{display:flex;align-items:center;gap:6px;margin:4px 0;cursor:pointer}
-  .layer-toggle input{cursor:pointer}
-  .search-instr{position:absolute;bottom:200px;left:10px;z-index:1000;background:rgba(200,30,30,0.9);padding:10px 14px;border-radius:8px;font-size:13px;max-width:220px;border:2px solid #ff4444;animation:pulse 2s infinite}
-  @keyframes pulse{0%{opacity:1}50%{opacity:0.7}100%{opacity:1}}
-  .correction-note{position:absolute;bottom:300px;left:10px;z-index:1000;background:rgba(0,0,0,0.85);padding:8px 12px;border-radius:6px;font-size:11px;max-width:220px;border:1px solid #ffcc44}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#111;color:#fff;overflow:hidden}
+#map{width:100vw;height:100vh;position:fixed;top:0;left:0;z-index:0}
+#controls{position:fixed;top:10px;right:10px;z-index:1000;background:rgba(0,0,0,0.88);border-radius:10px;padding:10px;border:1px solid #555;max-height:85vh;overflow-y:auto;width:170px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#controls h3{color:#fff;font-size:13px;margin-bottom:6px;border-bottom:1px solid #444;padding-bottom:4px}
+.toggle-group{margin:2px 0}
+.toggle-row{display:flex;align-items:center;padding:5px 4px;border-radius:6px;cursor:pointer;transition:background 0.1s;gap:6px;font-size:12px;color:#ccc;-webkit-tap-highlight-color:transparent}
+.toggle-row:active{background:rgba(255,255,255,0.08)}
+.toggle-row .sw{width:36px;height:20px;border-radius:10px;flex-shrink:0;position:relative;border:1px solid #666;transition:all 0.15s}
+.toggle-row .sw.on{background:#4a7;border-color:#4a7}
+.toggle-row .sw.off{background:#333;border-color:#555}
+.toggle-row .sw::after{content:'';position:absolute;top:2px;width:14px;height:14px;border-radius:7px;background:#fff;transition:all 0.15s}
+.toggle-row .sw.on::after{right:2px}
+.toggle-row .sw.off::after{left:2px}
+.toggle-row .lbl{flex:1}
+.toggle-row .lbl .sub{font-size:9px;color:#777;display:block;margin-top:-1px}
+.locbtn{display:block;width:100%;padding:8px;margin-top:8px;border:none;border-radius:8px;background:#c33;color:#fff;font-size:13px;font-weight:bold;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.locbtn:active{background:#a22}
+hr{border:none;border-top:1px solid #333;margin:5px 0}
 </style>
 </head>
 <body>
 <div id="map"></div>
-<div class="correction-banner">&#9888; <b>GPS-CORRECTED July 21</b> - Verified via OSM + City data</div>
-<div class="legend">
-  <div style="font-weight:bold;margin-bottom:6px">Legend</div>
-  <div class="legend-item"><div class="legend-color" style="background:#ff4444;height:6px"></div> RUN (9.6 km/h)</div>
-  <div class="legend-item"><div class="legend-color" style="background:#ffaa33"></div> Brisk walk</div>
-  <div class="legend-item"><div class="legend-color" style="background:#ffdd66"></div> Slow walk</div>
-  <div class="legend-item"><div class="legend-color" style="background:rgba(255,50,50,0.3);height:12px"></div> High probability</div>
-  <div class="legend-item"><span style="color:#ffcc44">&#9660;</span> Hide spot (pipe/culvert)</div>
-</div>
-<div class="search-instr">
-  <h4>SEARCH NOW</h4>
-  <p>1. Walk Nose Creek corridor<br>2. Check every drain/pipe<br>3. Sheds, under decks<br><b>Found? Don't approach. Call 911.</b></p>
-</div>
-<div class="correction-note">
-  &#10003; <b>VERIFIED COORDS</b><br>Travis Cres: (51.101, -114.058)<br>McKnight/Centre: (51.0855, -114.0624)<br>Day Home: (51.0851, -114.0932)<br>Clothing: (51.0855, -114.080)
-</div>
-<button class="btn-locate" onclick="locateMe()">&#128205; FIND MY LOCATION</button>
-<div class="layer-toggle">
-  <div style="font-weight:bold;margin-bottom:5px;color:#aaa">Layers</div>
-  <label><input type="checkbox" checked onchange="toggleLayer('heat',this.checked)"/> Heat zones</label>
-  <label><input type="checkbox" checked onchange="toggleLayer('route',this.checked)"/> Route</label>
-  <label><input type="checkbox" checked onchange="toggleLayer('hideouts',this.checked)"/> Hide spots</label>
-  <label><input type="checkbox" checked onchange="toggleLayer('zones',this.checked)"/> Search zones</label>
-  <label><input type="checkbox" checked onchange="toggleLayer('drive',this.checked)"/> Drive patrol</label>
+<div id="controls">
+<h3>&#9881; Layers</h3>
+<div class="toggle-group" id="toggles"></div>
+<hr/>
+<button class="locbtn" onclick="locateMe()">&#128205; My Location</button>
 </div>
 <script>
-const map=L.map('map',{center:[51.095,-114.070],zoom:14});
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'OSM'}).addTo(map);
+const map=L.map('map',{center:[51.096,-114.065],zoom:14,zoomControl:false,attributionControl:false});
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
-L.control.layers({"Street":L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}),"Satellite":sat},null,{position:'topleft'}).addTo(map);
-const hL=L.layerGroup().addTo(map),rL=L.layerGroup().addTo(map),xL=L.layerGroup().addTo(map);
-const zL=L.layerGroup().addTo(map),dL=L.layerGroup().addTo(map),lL=L.layerGroup().addTo(map);
-// Nose Creek
-for(let i=0,nc=[];i<=25;i++){let t=i/25;nc.push([51.090+t*(51.076-51.090),-114.058+t*(-114.050+114.058)+0.004*Math.sin(t*6)]);if(i===25)L.polyline(nc,{color:'#44cc44',weight:6,opacity:0.4}).addTo(hL)}
-// Heat zones @ Travis Cres (51.101,-114.058)
-[[51.101,-114.058,400,0.25],[51.098,-114.056,300,0.2],[51.086,-114.057,300,0.15],[51.102,-114.062,300,0.15]].forEach(d=>L.circle([d[0],d[1]],{radius:d[2],color:'#ff2222',fillColor:'#ff2222',fillOpacity:d[3],weight:2,opacity:0.5}).addTo(hL));
-[[51.092,-114.050,500,0.12],[51.104,-114.052,500,0.1]].forEach(d=>L.circle([d[0],d[1]],{radius:d[2],color:'#ff8822',fillColor:'#ff8822',fillOpacity:d[3],weight:1,opacity:0.3}).addTo(hL));
-// Distance rings
-[[2400,'#ff6666'],[4800,'#ff8844']].forEach(d=>L.circle([51.101,-114.058],{radius:d[0],color:d[1],fill:false,weight:1.5,opacity:0.3,dashArray:'8,8'}).addTo(hL));
-// ROUTE: DayHome->Clothing->CCTV->Travis
+L.control.zoom({position:'bottomright'}).addTo(map);
+
+// Create ALL layers
+const layers={
+  route:L.layerGroup().addTo(map),
+  heat:L.layerGroup().addTo(map),
+  hideouts:L.layerGroup().addTo(map),
+  zone1:L.layerGroup().addTo(map),
+  zone2:L.layerGroup().addTo(map),
+  drive:L.layerGroup().addTo(map),
+  labels:L.layerGroup().addTo(map),
+  creek:L.layerGroup().addTo(map),
+  rings:L.layerGroup().addTo(map)
+};
+
+// ── Nose Creek ──
+const nc=[];for(let i=0;i<=30;i++){let t=i/30;nc.push([51.090+t*(51.074-51.090),-114.059+t*(-114.049+114.059)+0.005*Math.sin(t*7)])}
+L.polyline(nc,{color:'#3a8',weight:5,opacity:0.5}).addTo(layers.creek);
+
+// ── Heat zones @ Travis Cres ──
+L.circle([51.101,-114.058],{radius:400,color:'#f22',fillColor:'#f22',fillOpacity:0.2,weight:2,opacity:0.4}).addTo(layers.heat);
+L.circle([51.098,-114.056],{radius:300,color:'#f22',fillColor:'#f22',fillOpacity:0.15,weight:2,opacity:0.4}).addTo(layers.heat);
+L.circle([51.086,-114.057],{radius:350,color:'#fa2',fillColor:'#fa2',fillOpacity:0.12,weight:1,opacity:0.3}).addTo(layers.heat);
+L.circle([51.102,-114.062],{radius:300,color:'#fa2',fillColor:'#fa2',fillOpacity:0.12,weight:1,opacity:0.3}).addTo(layers.heat);
+L.circle([51.092,-114.050],{radius:500,color:'#fa2',fillColor:'#fa2',fillOpacity:0.08,weight:1,opacity:0.2}).addTo(layers.heat);
+
+// ── Distance rings ──
+L.circle([51.101,-114.058],{radius:2400,color:'#f66',fill:false,weight:1.5,opacity:0.25,dashArray:'6,6'}).addTo(layers.rings);
+L.circle([51.101,-114.058],{radius:4800,color:'#f84',fill:false,weight:1.5,opacity:0.15,dashArray:'6,6'}).addTo(layers.rings);
+
+// ── Route ──
 const rt=[{la:51.0851,lo:-114.0932},{la:51.0855,lo:-114.0800},{la:51.0855,lo:-114.0624},{la:51.0855,lo:-114.0624},{la:51.1010,lo:-114.0580}];
-['#ffdd66','#ffaa33','#ffaa33','#ff4444'].forEach((c,i)=>{let p1=rt[i],p2=rt[i+1],dx=p2.la-p1.la,dy=p2.lo-p1.lo,w=i===3?6:4;for(let s=0;s<30;s+=3){let t1=s/30,t2=Math.min((s+1)/30,1);L.polyline([[p1.la+dx*t1,p1.lo+dy*t1],[p1.la+dx*t2,p1.lo+dy*t2]],{color:c,weight:w,opacity:0.9}).addTo(rL)}});
-// Speed labels
-[[51.084,-114.086,'Walk 1.7 km/h'],[51.084,-114.070,'Brisk 2.1 km/h'],[51.092,-114.061,'RUN 9.6 km/h!']].forEach(d=>L.marker([d[0],d[1]],{icon:L.divIcon({html:'<div style="background:rgba(0,0,0,0.8);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;border:1px solid #ffcc44">'+d[2]+'</div>',iconSize:[0,0]})}).addTo(lL));
-// Markers
-[['Day Home 11:08AM Connaught Dr',51.0851,-114.0932,'#ffcc44'],['Clothing ~12:00 Northmount Dr',51.0855,-114.0800,'#ffcc44'],['CCTV 12:34-12:47 McKnight/Centre',51.0855,-114.0624,'#ffcc44'],['LAST SEEN 12:52PM Travis Cres!',51.1010,-114.0580,'#ff4444'],['Thorncliffe School',51.1021,-114.0666,'#ffaa44'],['Greenview Comm Centre',51.1018,-114.0618,'#ffaa44']].forEach(d=>{let c=d[3];let h=c==='#ff4444'?'<div style="background:#ff4444;color:#fff;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:bold;white-space:nowrap;border:2px solid #fff">&#128680; '+d[0]+'</div>':'<div style="background:'+c+';color:#000;padding:2px 6px;border-radius:3px;font-size:11px;font-weight:bold;white-space:nowrap;border:1px solid #fff">'+d[0]+'</div>';L.marker([d[1],d[2]],{icon:L.divIcon({html:h,iconSize:[0,0]})}).addTo(lL)});
-// Hide spots
-[['DRAIN PIPE','Under McKnight bridge',51.0863,-114.0575],['CULVERT','Big pipe Nose Creek',51.0845,-114.0565],['STORM DRAIN','Deep ditch McKnight',51.0852,-114.0585],['DRAIN PIPE','Overgrown hidden pipe',51.0825,-114.0555],['CULVERT','Large pipe under path',51.0985,-114.0565],['CREEK PIPE','Metal outlet',51.0990,-114.0575],['STORM POND','Greenview pond',51.1005,-114.0550],['BRIDGE UNDER','Dark under McKnight',51.0860,-114.0572],['DITCH DRAIN','Roadside culvert',51.1015,-114.0535],['PIPE OUTFALL','Concrete pipe south',51.0875,-114.0545]].forEach(d=>{let m=L.marker([d[2],d[3]],{icon:L.divIcon({html:'<div style="background:#ffcc44;color:#000;width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold;border:3px solid #fff;cursor:pointer">&#9660;</div>',iconSize:[24,24],iconAnchor:[12,12]})}).addTo(xL);m.bindPopup('<b style=color:#ffcc44>'+d[0]+'</b><p style=color:#ddd>'+d[1]+'</p><p style=color:#ff6644;font-size:12px><b>Check INSIDE the pipe!</b></p>')});
-// Search zones
-L.circle([51.101,-114.058],{radius:500,color:'#ff4444',fillColor:'#ff2222',fillOpacity:0.08,weight:3,opacity:0.7}).addTo(zL);
-L.circle([51.101,-114.058],{radius:1000,color:'#ff8844',fillColor:'#ff6622',fillOpacity:0.05,weight:2,opacity:0.5,dashArray:'6,6'}).addTo(zL);
-L.marker([51.093,-114.060],{icon:L.divIcon({html:'<div style="background:rgba(0,0,0,0.8);color:#ff4444;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:bold;border:1px solid #ff4444">ZONE 1 Walk 500m</div>',iconSize:[0,0]})}).addTo(lL);
-L.marker([51.089,-114.062],{icon:L.divIcon({html:'<div style="background:rgba(0,0,0,0.8);color:#ff8844;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:bold;border:1px solid #ff8844">ZONE 2 Walk 1km</div>',iconSize:[0,0]})}).addTo(lL);
-// Drive
-[['McKnight Blvd',[[51.085,-114.105],[51.085,-114.035]]],['Centre St N',[[51.108,-114.062],[51.060,-114.062]]],['32 Ave NE',[[51.078,-114.090],[51.078,-114.035]]],['Deerfoot Tr',[[51.106,-114.045],[51.066,-114.045]]],['16 Ave N',[[51.066,-114.095],[51.066,-114.035]]],['Barlow Tr',[[51.098,-114.038],[51.076,-114.038]]],['64 Ave N',[[51.094,-114.075],[51.094,-114.045]]],['Beddington Tr',[[51.099,-114.075],[51.097,-114.045]]]].forEach(d=>{L.polyline(d[1],{color:'#4488ff',weight:6,opacity:0.4}).addTo(dL);let m=[(d[1][0][0]+d[1][1][0])/2,(d[1][0][1]+d[1][1][1])/2];L.marker(m,{icon:L.divIcon({html:'<div style="background:rgba(0,0,0,0.7);color:#4488ff;padding:1px 5px;border-radius:2px;font-size:10px;font-weight:bold">DRIVE '+d[0]+'</div>',iconSize:[0,0]})}).addTo(lL)});
-function locateMe(){map.locate({setView:true,maxZoom:16,enableHighAccuracy:true});map.on('locationfound',function(e){L.circleMarker(e.latlng,{radius:10,fillColor:'#44aaff',color:'#fff',weight:3,fillOpacity:0.9}).addTo(map);L.popup().setLatLng(e.latlng).setContent('<b>You are HERE</b><br>Zoom to see hide spots').openOn(map)});map.on('locationerror',function(){alert('Enable GPS on your phone')})}
-function toggleLayer(n,s){const ls={heat:hL,route:rL,hideouts:xL,zones:zL,drive:dL};if(s)map.addLayer(ls[n]);else map.removeLayer(ls[n])}
+['#fd6','#fa3','#fa3','#f44'].forEach((c,i)=>{let p1=rt[i],p2=rt[i+1],dx=p2.la-p1.la,dy=p2.lo-p1.lo,w=i===3?7:4;for(let s=0;s<30;s+=2){let t1=s/30,t2=Math.min((s+1)/30,1);L.polyline([[p1.la+dx*t1,p1.lo+dy*t1],[p1.la+dx*t2,p1.lo+dy*t2]],{color:c,weight:w,opacity:0.85}).addTo(layers.route)}});
+
+// ── Zone 1 ──
+L.circle([51.101,-114.058],{radius:500,color:'#f44',fillColor:'#f22',fillOpacity:0.06,weight:2,opacity:0.6}).addTo(layers.zone1);
+// ── Zone 2 ──
+L.circle([51.101,-114.058],{radius:1000,color:'#f84',fillColor:'#f62',fillOpacity:0.03,weight:1.5,opacity:0.4,dashArray:'5,5'}).addTo(layers.zone2);
+
+// ── Labels ──
+const mk=function(h,lats,lons){L.marker([lats,lons],{icon:L.divIcon({html:h,iconSize:[0,0]})}).addTo(layers.labels)};
+mk('<div style="background:#fd6;color:#000;padding:2px 5px;border-radius:3px;font-size:10px;font-weight:bold">Day Home 11:08</div>',51.0854,-114.0915);
+mk('<div style="background:#fd6;color:#000;padding:2px 5px;border-radius:3px;font-size:10px;font-weight:bold">Clothing ~12:00</div>',51.0845,-114.079);
+mk('<div style="background:#fd6;color:#000;padding:2px 5px;border-radius:3px;font-size:10px;font-weight:bold">CCTV 12:34-12:47</div>',51.088,-114.063);
+mk('<div style="background:#f44;color:#fff;padding:3px 7px;border-radius:4px;font-size:12px;font-weight:bold;border:2px solid #fff">&#128680; LAST SEEN 12:52 Travis Cres</div>',51.1025,-114.058);
+mk('<div style="background:rgba(0,0,0,0.8);color:#aaa;padding:2px 6px;border-radius:3px;font-size:9px;border:1px solid #666">Thorncliffe School</div>',51.1021,-114.0666);
+mk('<div style="background:rgba(0,0,0,0.8);color:#aaa;padding:2px 6px;border-radius:3px;font-size:9px;border:1px solid #666">Greenview Centre</div>',51.1018,-114.0618);
+mk('<div style="background:rgba(0,0,0,0.85);color:#fd6;padding:2px 6px;border-radius:3px;font-size:9px">1. Walk 1.7km/h</div>',51.083,-114.086);
+mk('<div style="background:rgba(0,0,0,0.85);color:#fa3;padding:2px 6px;border-radius:3px;font-size:9px">2. Brisk 2.1km/h</div>',51.084,-114.070);
+mk('<div style="background:rgba(0,0,0,0.85);color:#f44;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:bold">3. RUN 9.6km/h!</div>',51.093,-114.061);
+mk('<div style="background:rgba(0,0,0,0.8);color:#f44;padding:2px 5px;border-radius:3px;font-size:10px;font-weight:bold;border:1px solid #f44">ZONE 1 Walk 500m</div>',51.093,-114.060);
+mk('<div style="background:rgba(0,0,0,0.8);color:#f84;padding:2px 5px;border-radius:3px;font-size:10px;font-weight:bold;border:1px solid #f84">ZONE 2 Walk 1km</div>',51.088,-114.060);
+
+// ── Hide spots ──
+[[51.0863,-114.0575,'DRAIN PIPE','Under McKnight bridge'],[51.0845,-114.0565,'CULVERT','Big pipe Nose Creek'],[51.0852,-114.0585,'STORM DRAIN','Deep ditch McKnight'],[51.0825,-114.0555,'PIPE','Overgrown hidden pipe'],[51.0985,-114.0565,'CULVERT','Large pipe under path'],[51.0990,-114.0575,'PIPE','Metal outlet into creek'],[51.1005,-114.0550,'STORM POND','Greenview pond inlets'],[51.0860,-114.0572,'BRIDGE','Dark under McKnight'],[51.1015,-114.0535,'DITCH','Roadside culvert'],[51.0875,-114.0545,'OUTFALL','Concrete pipe south']].forEach(d=>{
+L.marker([d[0],d[1]],{icon:L.divIcon({html:'<div style="background:#fd4;color:#000;width:22px;height:22px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.6)">▼</div>',iconSize:[22,22],iconAnchor:[11,11]})}).addTo(layers.hideouts)
+.bindPopup('<b style=color:#fd4>'+d[2]+'</b><br><span style=color:#ccc>'+d[3]+'</span><br><span style=color:#f66;font-size:11px><b>Check INSIDE the pipe!</b></span>');
+L.marker([d[0]+0.0008,d[1]],{icon:L.divIcon({html:'<div style="background:rgba(0,0,0,0.8);color:#fd4;padding:1px 4px;border-radius:2px;font-size:9px;white-space:nowrap">'+d[2]+'</div>',iconSize:[0,0]})}).addTo(layers.hideouts)});
+
+// ── Drive patrol ──
+[['McKnight Blvd',[[51.085,-114.105],[51.085,-114.035]]],['Centre St N',[[51.108,-114.062],[51.060,-114.062]]],['32 Ave NE',[[51.078,-114.090],[51.078,-114.035]]],['Deerfoot Tr',[[51.106,-114.045],[51.066,-114.045]]],['16 Ave N',[[51.066,-114.095],[51.066,-114.035]]],['Barlow Tr',[[51.098,-114.038],[51.076,-114.038]]]].forEach(d=>{L.polyline(d[1],{color:'#48f',weight:5,opacity:0.3}).addTo(layers.drive);
+let m=[(d[1][0][0]+d[1][1][0])/2,(d[1][0][1]+d[1][1][1])/2];
+L.marker(m,{icon:L.divIcon({html:'<div style="background:rgba(0,0,0,0.7);color:#48f;padding:1px 4px;border-radius:2px;font-size:9px;font-weight:bold">DRIVE '+d[0]+'</div>',iconSize:[0,0]})}).addTo(layers.drive)});
+
+// ── Layer toggle UI ──
+const toggleDefs=[
+  {id:'heat',label:'Probability heat',sub:'Red=high, orange=medium',def:true},
+  {id:'zone1',label:'Zone 1 walk (500m)',sub:'Immediate search area',def:true},
+  {id:'zone2',label:'Zone 2 walk (1km)',sub:'Extended search area',def:true},
+  {id:'route',label:"Parker's route",sub:'Walk  walk  RUN',def:true},
+  {id:'hideouts',label:'Hide spots',sub:'10 pipes/culverts/drains',def:true},
+  {id:'creek',label:'Nose Creek corridor',sub:'Green pathway',def:true},
+  {id:'rings',label:'Distance rings',sub:'2.4km & 4.8km radius',def:false},
+  {id:'drive',label:'Drive patrol roads',sub:'Blue = drive slowly',def:true},
+  {id:'labels',label:'All labels',sub:'Names, signs, markers',def:true}
+];
+
+const tg=document.getElementById('toggles');
+toggleDefs.forEach(t=>{
+  const row=document.createElement('div');
+  row.className='toggle-row';
+  row.dataset.layer=t.id;
+  const sw=document.createElement('div');
+  sw.className='sw '+(t.def?'on':'off');
+  const lb=document.createElement('div');
+  lb.className='lbl';
+  lb.innerHTML=t.label+'<span class="sub">'+t.sub+'</span>';
+  row.appendChild(sw);
+  row.appendChild(lb);
+  row.onclick=function(){
+    const isOn=sw.classList.contains('on');
+    sw.classList.remove('on','off');
+    sw.classList.add(isOn?'off':'on');
+    if(isOn)map.removeLayer(layers[t.id]);
+    else map.addLayer(layers[t.id]);
+  };
+  tg.appendChild(row);
+});
+
+function locateMe(){map.locate({setView:true,maxZoom:16,enableHighAccuracy:true});
+map.on('locationfound',function(e){L.circleMarker(e.latlng,{radius:9,fillColor:'#4af',color:'#fff',weight:3,fillOpacity:0.9}).addTo(map);L.popup().setLatLng(e.latlng).setContent('<b>You</b>').openOn(map)});
+map.on('locationerror',function(){alert('Enable GPS + allow location in browser settings')})}
+
+// Clean zoom
+map.on('popupopen',function(e){map.setView(e.target._popup._latlng,map.getZoom()+0.5,{animate:true})});
 </script>
 </body>
 </html>
