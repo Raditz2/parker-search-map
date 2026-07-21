@@ -7,17 +7,13 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#111;overflow:hidden}
 #map{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0}
-
-/* Fat bottom bar */
 #bar{position:fixed;bottom:0;left:0;right:0;z-index:1000;background:rgba(0,0,0,0.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-top:2px solid #444;padding:6px 10px;display:flex;align-items:center;gap:8px;touch-action:manipulation}
 #bar .loc{background:#d22;border:none;color:#fff;padding:12px 18px;border-radius:10px;font-size:15px;font-weight:bold;cursor:pointer;flex-shrink:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #bar .loc:active{background:#a11}
-#bar .info{flex:1;font-size:14px;color:#fff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#bar .info{flex:1;font-size:14px;color:#fff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 4px}
 #bar .info .sm{font-size:11px;color:#888;margin-left:4px}
 #bar .gear{background:#333;border:1px solid #666;color:#fff;padding:12px 14px;border-radius:10px;font-size:22px;cursor:pointer;flex-shrink:0;line-height:1;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #bar .gear:active{background:#444}
-
-/* Sliding panel */
 #panel{position:fixed;top:0;right:0;z-index:2000;width:240px;height:100vh;background:rgba(0,0,0,0.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transform:translateX(100%);transition:transform 0.2s;padding:14px;border-left:2px solid #444;overflow-y:auto}
 #panel.open{transform:translateX(0)}
 #panel h2{font-size:15px;color:#fff;margin-bottom:8px;border-bottom:1px solid #333;padding-bottom:6px}
@@ -33,7 +29,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#111;ove
 .sw .t{flex:1}
 .sw .t .l{font-size:13px;color:#ddd}
 .sw .t .d{font-size:10px;color:#666;display:block}
-
 .leaflet-popup-content-wrapper{background:#111!important;color:#fff!important;border:1px solid #444;border-radius:8px!important}
 .leaflet-popup-tip{background:#111!important;border:1px solid #444}
 </style>
@@ -42,68 +37,82 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#111;ove
 <div id="map"></div>
 <div id="bar">
   <button class="loc" onclick="locateMe()">📍</button>
-  <div class="info" id="info">near Travis Cres<span class="sm" id="dist"></span></div>
+  <div class="info" id="info">Travis Cres<span class="sm" id="dist"></span></div>
   <button class="gear" onclick="panel()">⚙</button>
 </div>
 <div id="panel">
   <button class="x" onclick="panel()">✕</button>
-  <h2>Show on map:</h2>
+  <h2>Layers</h2>
   <div id="toggles"></div>
 </div>
 <script>
-// ═══ MAP ═══
 const map=L.map('map',{center:[51.101,-114.058],zoom:16,zoomControl:false,attributionControl:false});
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 L.control.zoom({position:'bottomleft'}).addTo(map);
 
-// ═══ LAYERS ═══
 const LZ={
-  spots:L.layerGroup().addTo(map),  // hide spots ON by default
-  zone:L.layerGroup().addTo(map),   // zone ON by default
-  route:L.layerGroup(),             // route OFF
-  heat:L.layerGroup(),              // heat OFF
-  labels:L.layerGroup()             // labels OFF
+  spots:L.layerGroup().addTo(map),
+  zone:L.layerGroup().addTo(map),
+  water:L.layerGroup().addTo(map),
+  route:L.layerGroup(),
+  heat:L.layerGroup(),
+  labels:L.layerGroup()
 };
 
-// ── Nose Creek (always on) ──
+// Nose Creek (always on, part of base)
 const nc=[];for(let i=0;i<=30;i++){let t=i/30;nc.push([51.090+t*(51.074-51.090),-114.059+t*(-114.049+114.059)+0.005*Math.sin(t*7)])}
-L.polyline(nc,{color:'#4a8',weight:4,opacity:0.35});
+L.polyline(nc,{color:'#3a8',weight:5,opacity:0.4});
 
-// ── Zone 1 (500m) ──
-L.circle([51.101,-114.058],{radius:500,color:'#f44',fillColor:'#f44',fillOpacity:0.04,weight:2,opacity:0.4}).addTo(LZ.zone);
+// ═══ WATER & GREEN LAYER ═══
+// Water features (ponds, storm water)
+[[51.0996,-114.0528,'Greenview storm pond'],[51.0878,-114.0494,'Nose Creek pond'],[51.0838,-114.0475,'Nose Creek water'],[51.0743,-114.0375,'Nose Creek downstream']].forEach(d=>{
+  L.circle([d[0],d[1]],{radius:25,color:'#4af',fillColor:'#4af',fillOpacity:0.6,weight:2}).addTo(LZ.water);
+  L.marker([d[0]+0.0008,d[1]],{icon:L.divIcon({html:'<span style="background:rgba(0,0,0,0.8);color:#4af;padding:1px 4px;border-radius:3px;font-size:9px">💧 '+d[2]+'</span>',iconSize:[0,0]})}).addTo(LZ.water);
+});
+// Parks and green spaces
+const parks=[
+  [51.1045,-114.0533,'Laycock Park'],[51.1043,-114.0568,'Green space'],[51.1038,-114.0613,'Recreation ground'],[51.0997,-114.0601,'Thorncliffe park'],[51.1028,-114.0581,'Travis Cres park'],[51.1014,-114.0581,'Small green space'],[51.0908,-114.0657,'Green space'],[51.0980,-114.0628,'Park area'],[51.0923,-114.0519,'Thorncliffe green'],[51.0975,-114.0565,'Nose Creek park'],[51.1002,-114.0530,'Greenview park'],[51.0935,-114.0674,'Highland golf course (closed)'],[51.0891,-114.0604,'Thorncliffe park'],[51.0853,-114.0660,'School green space'],[51.0968,-114.0522,'Nose Creek meadow'],[51.0919,-114.0565,'Thorncliffe green'],
+];
+parks.forEach(d=>{
+  L.circle([d[0],d[1]],{radius:35,color:'#4a8',fillColor:'#4a8',fillOpacity:0.35,weight:1}).addTo(LZ.water);
+  L.marker([d[0]+0.0008,d[1]],{icon:L.divIcon({html:'<span style="background:rgba(0,0,0,0.8);color:#4a8;padding:1px 4px;border-radius:3px;font-size:9px">🌿 '+d[2]+'</span>',iconSize:[0,0]})}).addTo(LZ.water);
+});
+// Nose Creek stream line (thicker blue on water layer)
+const nc2=[];for(let i=0;i<=30;i++){let t=i/30;nc2.push([51.090+t*(51.074-51.090),-114.059+t*(-114.049+114.059)+0.005*Math.sin(t*7)])}
+L.polyline(nc2,{color:'#4af',weight:3,opacity:0.5}).addTo(LZ.water);
 
-// ── Hide spots ──
+// Zone 1
+L.circle([51.101,-114.058],{radius:500,color:'#f44',fillColor:'#f44',fillOpacity:0.03,weight:2,opacity:0.35}).addTo(LZ.zone);
+
+// Hide spots
 [[51.0863,-114.0575,'Pipe under McKnight bridge'],[51.0845,-114.0565,'Big pipe Nose Creek'],[51.0852,-114.0585,'Storm drain McKnight'],[51.0825,-114.0555,'Hidden pipe'],[51.0985,-114.0565,'Culvert under path'],[51.0990,-114.0575,'Metal pipe into creek'],[51.1005,-114.0550,'Storm pond drain'],[51.0860,-114.0572,'Under McKnight bridge'],[51.1015,-114.0535,'Roadside ditch'],[51.0875,-114.0545,'Concrete pipe']].forEach(d=>{
 L.circleMarker([d[0],d[1]],{radius:8,color:'#fd4',fillColor:'#fd4',fillOpacity:0.9,weight:2}).addTo(LZ.spots)
 .bindPopup('<b style=color:#fd4>▼ '+d[2]+'</b><br><span style=color:#f44>Check INSIDE!</span>')});
 
-// ── Route (OFF) ──
+// Route (OFF)
 const rt=[{la:51.0851,lo:-114.0932},{la:51.0855,lo:-114.0800},{la:51.0855,lo:-114.0624},{la:51.0855,lo:-114.0624},{la:51.1010,lo:-114.0580}];
 ['#fd6','#fa3','#fa3','#f44'].forEach((c,i)=>{let p1=rt[i],p2=rt[i+1],dx=p2.la-p1.la,dy=p2.lo-p1.lo,w=i===3?5:3;for(let s=0;s<30;s+=2){let t1=s/30,t2=Math.min((s+1)/30,1);L.polyline([[p1.la+dx*t1,p1.lo+dy*t1],[p1.la+dx*t2,p1.lo+dy*t2]],{color:c,weight:w,opacity:0.8}).addTo(LZ.route)}});
 
-// ── Heat (OFF) ──
+// Heat (OFF)
 L.circle([51.101,-114.058],{radius:400,color:'#f44',fillColor:'#f22',fillOpacity:0.15,weight:1,opacity:0.2}).addTo(LZ.heat);
 L.circle([51.086,-114.057],{radius:400,color:'#fa2',fillColor:'#fa2',fillOpacity:0.1,weight:1,opacity:0.15}).addTo(LZ.heat);
 L.circle([51.092,-114.050],{radius:600,color:'#fa2',fillColor:'#fa2',fillOpacity:0.07,weight:1,opacity:0.1}).addTo(LZ.heat);
 
-// ── Labels (OFF) ──
+// Labels (OFF)
 function lb(h,la,lo){L.marker([la,lo],{icon:L.divIcon({className:'',html:h,iconSize:[0,0]})}).addTo(LZ.labels)}
-
-// BIG last seen label (always visible)
 L.circleMarker([51.101,-114.058],{radius:16,color:'#f44',fillColor:'#f44',fillOpacity:0.9,weight:3,interactive:false});
 lb('<div style="background:#c33;padding:4px 10px;border-radius:8px;font-size:15px;color:#fff;border:2px solid #fff;font-weight:bold;box-shadow:0 2px 12px rgba(0,0,0,0.9)">🚨 LAST SEEN 12:52</div>',51.103,-114.058);
-
-// Labels that are OFF by default
 lb('<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:12px;color:#fd6">🏡 Day Home 11:08</span>',51.084,-114.091);
 lb('<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:12px;color:#fd6">👕 Clothing ~12:00</span>',51.083,-114.079);
 lb('<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:12px;color:#fd6">📹 CCTV 12:34-47</span>',51.087,-114.062);
-lb('<span style="background:rgba(0,0,0,0.85);padding:2px 8px;border-radius:5px;font-size:13px;color:#f44;border:1px solid #f44">🔴 ZONE 1 500m</span>',51.0925,-114.060);
+lb('<span style="background:rgba(0,0,0,0.85);padding:2px 8px;border-radius:5px;font-size:13px;color:#f44;border:1px solid #f44">🔴 ZONE 1 500m</span>',51.092,-114.060);
 lb('<span style="background:rgba(0,0,0,0.7);padding:1px 5px;border-radius:3px;font-size:10px;color:#aaa">🏫 Thorncliffe School</span>',51.103,-114.067);
 
-// ═══ TOGGLES ═══
+// Toggles
 const TD=[
-  {id:'spots',label:'Hide spots (pipes)',desc:'▼ 10 locations',on:true},
-  {id:'zone',label:'Zone 1 (500m)',desc:'Red search area',on:true},
+  {id:'water',label:'💧🌿 Water & green',desc:'Ponds, parks, creeks he would seek',on:true},
+  {id:'spots',label:'Hide spots (pipes)',desc:'▼ 10 locations to check',on:true},
+  {id:'zone',label:'Zone 1 (500m)',desc:'Red search boundary',on:true},
   {id:'route',label:"Parker's route",desc:'Walk → brisk → RUN',on:false},
   {id:'heat',label:'Probability heat',desc:'Hotspot zones',on:false},
   {id:'labels',label:'All labels',desc:'Names & markers',on:false}
@@ -134,7 +143,7 @@ function locateMe(){
 }
 function gdist(lat,lon){
   const d=dist(lat,lon,51.101,-114.058);
-  document.getElementById('info').innerHTML=(d<0.5?'<b>IN ZONE 1!</b> search now':d<1?'IN ZONE 2 - '+(d*1000).toFixed(0)+'m':d.toFixed(1)+' km away')+'<span class="sm"> from Travis Cres</span>';
+  document.getElementById('info').innerHTML=(d<0.5?'<b>IN ZONE 1!</b> search now':d<1?'IN ZONE 2 '+(d*1000).toFixed(0)+'m':d.toFixed(1)+' km')+'<span class="sm"> from Travis</span>';
 }
 function dist(l1,n1,l2,n2){const R=6371;const a=Math.sin((l2-l1)*(Math.PI/180)/2)**2+Math.cos(l1*Math.PI/180)*Math.cos(l2*Math.PI/180)*Math.sin((n2-n1)*(Math.PI/180)/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
 map.on('moveend',function(){const c=map.getCenter();gdist(c.lat,c.lng)});
