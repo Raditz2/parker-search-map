@@ -44,7 +44,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#111;ove
   <div id="toggles"></div>
 </div>
 <script>
-const map=L.map('map',{center:[51.093,-114.064],zoom:14,zoomControl:false,attributionControl:false});
+const map=L.map('map',{center:[51.092,-114.064],zoom:14,zoomControl:false,attributionControl:false});
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 L.control.zoom({position:'bottomleft'}).addTo(map);
 
@@ -61,7 +61,7 @@ const LZ={
 const nc=[];for(let i=0;i<=35;i++){let t=i/35;nc.push([51.092+t*(51.072-51.092),-114.059+t*(-114.049+114.059)+0.005*Math.sin(t*8)])}
 L.polyline(nc,{color:'#3af',weight:4,opacity:0.35});
 
-// Water
+// Water features
 [[51.0996,-114.0528],[51.0878,-114.0494],[51.0838,-114.0475],[51.0815,-114.0540],[51.0790,-114.0500],[51.0790,-114.0500],[51.0770,-114.0480],[51.1005,-114.0550],[51.0990,-114.0575],[51.0875,-114.0545]].forEach(d=>{L.circle([d[0],d[1]],{radius:15,color:'#3af',fillColor:'#3af',fillOpacity:0.4,weight:2})});
 
 // Parks
@@ -70,17 +70,17 @@ L.polyline(nc,{color:'#3af',weight:4,opacity:0.35});
 // Zone 1 from Travis
 L.circle([51.10099,-114.05830],{radius:500,color:'#f44',fillColor:'#f44',fillOpacity:0.02,weight:2,opacity:0.3}).addTo(LZ.zone);
 
-// ═══ 4 LOCATIONS ═══
+// ═══ 4 CORRECTED LOCATIONS ═══
 
-// 1. Day Home - Connaught Dr NW
+// 1. Day Home - Connaught Dr NW (51.08506, -114.09319) - OSM verified
 L.circleMarker([51.08506,-114.09319],{radius:6,color:'#fd6',fillColor:'#fd6',fillOpacity:0.9,weight:2}).addTo(LZ.zone);
-L.marker([51.0845,-114.092],{icon:L.divIcon({iconSize:[0,0],html:'<div style="background:#fd6;color:#000;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;border:1px solid #fff">🏡 Day Home 11:08</div>'})}).addTo(LZ.zone);
+L.marker([51.0845,-114.093],{icon:L.divIcon({iconSize:[0,0],html:'<div style="background:#fd6;color:#000;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;border:1px solid #fff">🏡 Day Home 11:08 Connaught Dr</div>'})}).addTo(LZ.zone);
 
-// 2. Clothing - Northmount Dr NW
-L.circleMarker([51.0855,-114.080],{radius:6,color:'#fd6',fillColor:'#fd6',fillOpacity:0.9,weight:2}).addTo(LZ.zone);
-L.marker([51.085,-114.079],{icon:L.divIcon({iconSize:[0,0],html:'<div style="background:#fd6;color:#000;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;border:1px solid #fff">👕 Clothing ~12:00</div>'})}).addTo(LZ.zone);
+// 2. Clothing - Northmount Dr NW Cambrian Heights (51.086, -114.089) - OSM verified NOT cemetery
+L.circleMarker([51.08605,-114.08886],{radius:6,color:'#fd6',fillColor:'#fd6',fillOpacity:0.9,weight:2}).addTo(LZ.zone);
+L.marker([51.08605,-114.08886],{icon:L.divIcon({iconSize:[0,0],html:'<div style="background:#fd6;color:#000;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;border:1px solid #fff">👕 Clothing ~12:00 Northmount Dr NW 0-100 blk</div>'})}).addTo(LZ.zone);
 
-// 3. CCTV - 36th Ave & Centre St (CORRECT)
+// 3. CCTV - 36th Ave & Centre St (51.0855, -114.0624)
 L.circleMarker([51.0855,-114.0624],{radius:10,color:'#f44',fillColor:'#f44',fillOpacity:0.9,weight:3}).addTo(LZ.zone);
 L.marker([51.0845,-114.0615],{icon:L.divIcon({iconSize:[0,0],html:'<div style="background:#c33;color:#fff;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:bold;border:2px solid #ff0;box-shadow:0 2px 8px rgba(0,0,0,0.8)">📹 CCTV 36th Ave & Centre St 12:34-12:47</div>'})}).addTo(LZ.zone);
 
@@ -92,15 +92,15 @@ L.marker([51.103,-114.05830],{icon:L.divIcon({iconSize:[0,0],html:'<div style="b
 [[51.0863,-114.0575],[51.0845,-114.0565],[51.0852,-114.0585],[51.0825,-114.0555],[51.0985,-114.0565],[51.0990,-114.0575],[51.1005,-114.0550],[51.0860,-114.0572],[51.1015,-114.0535],[51.0875,-114.0545]].forEach(d=>{
 L.circleMarker([d[0],d[1]],{radius:5,color:'#fd4',fillColor:'#fd4',fillOpacity:0.8,weight:2}).addTo(LZ.spots)});
 
-// Route
-const rt=[[51.08506,-114.09319],[51.0855,-114.080],[51.0855,-114.0624],[51.10099,-114.05830]];
+// Route - correct path
+const rt=[[51.08506,-114.09319],[51.08605,-114.08886],[51.0855,-114.0624],[51.10099,-114.05830]];
 ['#fd6','#fa3','#f44'].forEach((c,i)=>{let p1=rt[i],p2=rt[i+1],dx=p2[0]-p1[0],dy=p2[1]-p1[1],w=i===2?5:3;for(let s=0;s<30;s+=2){let t1=s/30,t2=Math.min((s+1)/30,1);L.polyline([[p1[0]+dx*t1,p1[1]+dy*t1],[p1[0]+dx*t2,p1[1]+dy*t2]],{color:c,weight:w,opacity:0.8}).addTo(LZ.route)}});
 
 // Labels (OFF)
-L.marker([51.092,-114.059],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:11px;color:#f44;border:1px solid #f44">🔴 ZONE 1 500m</span>'})}).addTo(LZ.labels);
-L.marker([51.084,-114.087],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:10px;color:#fd6">Walk 1.7km/h east</span>'})}).addTo(LZ.labels);
-L.marker([51.085,-114.072],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:10px;color:#fa3">Walk 2.1km/h to Centre</span>'})}).addTo(LZ.labels);
-L.marker([51.093,-114.062],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:10px;color:#f44;font-weight:bold">SPRINTS 1.7km North to Travis! 20km/h</span>'})}).addTo(LZ.labels);
+L.marker([51.091,-114.059],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:11px;color:#f44;border:1px solid #f44">🔴 ZONE 1 500m</span>'})}).addTo(LZ.labels);
+L.marker([51.0855,-114.091],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:10px;color:#fd6">Phase 1: Walk ~2km/h</span>'})}).addTo(LZ.labels);
+L.marker([51.0857,-114.075],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:10px;color:#fa3">Phase 2: Brisk ~3km/h east</span>'})}).addTo(LZ.labels);
+L.marker([51.093,-114.062],{icon:L.divIcon({iconSize:[0,0],html:'<span style="background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;font-size:10px;color:#f44;font-weight:bold">Phase 3: SPRINTS 1.7km North!</span>'})}).addTo(LZ.labels);
 
 // Toggles
 const TD=[
